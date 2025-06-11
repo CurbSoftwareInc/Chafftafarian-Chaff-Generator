@@ -301,25 +301,35 @@ class FileLinkingManager:
     def _choose_encoding_method(self, file_type: str) -> EncodingMethod:
         """Choose appropriate encoding method based on file type and randomness"""
         
-        # Different probabilities for different file types
-        if file_type == 'eml':
+        # Binary files (PDFs, images) must maintain their integrity and proper MIME types
+        # These files should NEVER be encoded/encrypted as it corrupts their format
+        if file_type == 'pdf':
+            # PDFs must remain unencoded to maintain proper format and MIME type
+            return EncodingMethod.NONE
+            
+        elif file_type in ['jpg', 'png']:
+            # Images must remain unencoded to maintain proper MIME types
+            return EncodingMethod.NONE
+            
+        elif file_type == 'eml':
             # Emails are usually not encoded themselves, but may reference encoded attachments
             return EncodingMethod.NONE
-        elif file_type == 'pdf':
-            # PDFs should avoid ZIP encoding to prevent application confusion
-            # Use only base64 or encryption, or no encoding
-            weights = [0.5, 0.2, 0.1, 0.1, 0.1, 0.0, 0.0]  # No ZIP methods
+            
         elif file_type == 'docx':
-            # Word documents can use various encoding
+            # Word documents can use various encoding methods
             weights = [0.3, 0.2, 0.1, 0.1, 0.2, 0.05, 0.05]
+            
         elif file_type in ['xlsx', 'csv']:
             # Data files often compressed or encoded
             weights = [0.2, 0.2, 0.1, 0.1, 0.1, 0.2, 0.1]
+            
         elif file_type == 'txt':
-            # Text files often base64 encoded
+            # Text files can use any encoding method
             weights = [0.3, 0.3, 0.2, 0.1, 0.05, 0.03, 0.02]
-        else:  # jpg and others
-            weights = [0.4, 0.2, 0.1, 0.1, 0.1, 0.05, 0.05]
+            
+        else:
+            # Default for other file types - conservative approach
+            weights = [0.5, 0.2, 0.1, 0.1, 0.1, 0.0, 0.0]
         
         methods = list(EncodingMethod)
         return random.choices(methods, weights=weights)[0]

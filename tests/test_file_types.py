@@ -117,11 +117,11 @@ def test_file_types():
                         print(f"    ❌ Invalid ZIP archive")
                 
                 elif encoding_method in ['base64', 'base64_multiline', 'base64_urlsafe']:
-                    # Base64 files should have .b64 extension
-                    if actual_filename.endswith('.b64'):
-                        print(f"    ✅ Base64 file has correct extension")
+                    # Base64 files now keep original extensions (this is the desired behavior)
+                    if not actual_filename.endswith('.b64'):
+                        print(f"    ✅ Base64 file keeps original extension (correct)")
                     else:
-                        print(f"    ❌ Base64 file should have .b64 extension")
+                        print(f"    ❌ Base64 file should not have .b64 extension")
                 
                 elif encoding_method == 'encrypted_fernet':
                     # Encrypted files should either keep original extension (images) or have .enc
@@ -146,28 +146,29 @@ def test_file_types():
         # Check for issues
         issues = 0
         
-        # Check PDFs
+        # Check PDFs - should NEVER be encoded to maintain MIME type integrity
         for encoded_file, actual_filename, file_path in pdf_files:
             encoding_method = encoded_file.encoding_method.value
-            if encoding_method in ['zip_password', 'zip_encrypted']:
-                # Should be openable as ZIP
-                if not actual_filename.endswith('.pdf'):
-                    print(f"  ❌ ZIP-encoded PDF {actual_filename} should keep .pdf extension")
-                    issues += 1
+            if encoding_method != "none":
+                print(f"  ❌ PDF {actual_filename} should not be encoded (method: {encoding_method})")
+                issues += 1
             elif encoding_method == "none":
                 # Should be valid PDF
                 if file_path.exists():
                     with open(file_path, 'rb') as f:
                         if not f.read(10).startswith(b'%PDF-'):
-                            print(f"  ❌ Unencoded PDF {actual_filename} is not valid")
+                            print(f"  ❌ PDF {actual_filename} is not valid")
                             issues += 1
         
-        # Check images
+        # Check images - should NEVER be encoded to maintain MIME type integrity
         for encoded_file, actual_filename, file_path in image_files:
             encoding_method = encoded_file.encoding_method.value
             original_type = encoded_file.original_plan.file_type
             
-            if encoding_method == "none":
+            if encoding_method != "none":
+                print(f"  ❌ Image {actual_filename} should not be encoded (method: {encoding_method})")
+                issues += 1
+            elif encoding_method == "none":
                 # Should be valid image
                 if file_path.exists():
                     with open(file_path, 'rb') as f:
@@ -179,13 +180,8 @@ def test_file_types():
                             valid = True
                         
                         if not valid:
-                            print(f"  ❌ Unencoded image {actual_filename} is not valid")
+                            print(f"  ❌ Image {actual_filename} is not valid")
                             issues += 1
-            elif encoding_method == 'encrypted_fernet':
-                # Should keep original extension
-                if not actual_filename.endswith(f'.{original_type}'):
-                    print(f"  ❌ Encrypted image {actual_filename} should keep .{original_type} extension")
-                    issues += 1
         
         if issues == 0:
             print("\n✅ SUCCESS: All file types are working correctly!")
