@@ -384,6 +384,10 @@ python tests/test_pdf_debug.py
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Security Notice
+## Referenced
+For some vocab and seed data used content from:
+https://github.com/HadoopIt/Sentence-Generator.git
 
-This tool is designed for legitimate testing and research purposes. Users are responsible for ensuring compliance with applicable laws and regulations when using this software.
+* After creating chaff you might want to delete this directory with something like bleachbit --shred "~/projects/Chafftafarian-Chaff-Generator/"
+
+* I'll eventually add more vocab, text, and seed data that's more creative.
